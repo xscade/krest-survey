@@ -15,7 +15,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({ data }) => {
     <div className="bg-white rounded-2xl shadow-sm border border-[#9F6449]/10 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-[#F5EAE6] text-[#9F6449] border-b-2 border-[#9F6449]">
+          <thead className="bg-[#F5EAE6] text-[#9F6449] border-2 border-[#9F6449]">
             <tr>
               <th className="px-6 py-4 font-semibold">Date</th>
               <th className="px-6 py-4 font-semibold">Name</th>
