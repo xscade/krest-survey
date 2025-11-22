@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ProgressBar } from './components/ProgressBar';
 import { Button } from './components/Button';
 import { OptionCard } from './components/OptionCard';
+import { Dashboard } from './components/dashboard/Dashboard';
 import { 
   PatientFormData, 
   VisitType, 
@@ -11,7 +12,7 @@ import {
 } from './types';
 import { generateWelcomeMessage } from './services/geminiService';
 
-// --- Slide Components (Inline for simplicity in single App structure, usually separate files) ---
+// --- Slide Components ---
 
 // Slide 1: Welcome
 const WelcomeSlide = ({ onNext }: { onNext: () => void }) => (
@@ -45,7 +46,6 @@ const VisitTypeSlide = ({ data, updateData, onNext }: any) => {
             selected={data.visitType === opt.value}
             onClick={() => {
               updateData({ visitType: opt.value });
-              // Auto advance for smoother UX
               setTimeout(onNext, 250);
             }}
           />
@@ -87,7 +87,6 @@ const MobileSlide = ({ data, updateData, onNext }: any) => (
       className="w-full p-4 text-xl border-2 border-gray-200 rounded-xl focus:border-[#9F6449] focus:ring-0 outline-none transition-colors"
       value={data.mobileNumber}
       onChange={(e) => {
-        // Only allow numbers
         const val = e.target.value.replace(/\D/g, '');
         updateData({ mobileNumber: val });
       }}
@@ -140,7 +139,7 @@ const SourceSlide = ({ data, updateData, onNext }: any) => {
             selected={data.leadSource === s}
             onClick={() => {
               updateData({ leadSource: s });
-              if (s === LeadSource.Other) return; // Don't auto advance if other needs input
+              if (s === LeadSource.Other) return;
               setTimeout(onNext, 250);
             }}
           />
@@ -198,7 +197,6 @@ const ThankYouSlide = ({ data }: { data: PatientFormData }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Generate Gemini Message
     const fetchMessage = async () => {
       if (data.fullName && data.reason) {
         const msg = await generateWelcomeMessage(data.fullName, data.reason);
@@ -211,23 +209,17 @@ const ThankYouSlide = ({ data }: { data: PatientFormData }) => {
       }
     };
 
-    // 2. Save to Backend (Database)
     const saveData = async () => {
       try {
-        // This path works automatically when deployed on Vercel
         const response = await fetch('/api/patients', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
 
         if (response.ok) {
           if (isMounted) setSaveStatus('success');
         } else {
-          // If 404, it means the API route isn't found (likely running locally without backend)
-          console.warn("API route not found. If testing locally, data is not saved to DB.");
           throw new Error("Server responded with error");
         }
       } catch (error) {
@@ -249,7 +241,6 @@ const ThankYouSlide = ({ data }: { data: PatientFormData }) => {
       </div>
       <h1 className="text-3xl font-bold text-slate-900">All Set!</h1>
       
-      {/* Welcome Message Section */}
       <div className="min-h-[80px] flex items-center justify-center">
         {generatingMsg ? (
            <div className="flex flex-col items-center">
@@ -263,7 +254,6 @@ const ThankYouSlide = ({ data }: { data: PatientFormData }) => {
         )}
       </div>
 
-      {/* Database Status Section */}
       <div className="text-sm pt-4">
         {saveStatus === 'saving' && <span className="text-gray-400">Saving your details...</span>}
         {saveStatus === 'success' && <span className="text-green-600 font-medium flex items-center gap-1">✓ Details saved securely</span>}
@@ -279,7 +269,8 @@ const ThankYouSlide = ({ data }: { data: PatientFormData }) => {
   );
 };
 
-export default function App() {
+// --- Main Survey App Component ---
+const SurveyApp = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [formData, setFormData] = useState<PatientFormData>({
     fullName: '',
@@ -290,20 +281,8 @@ export default function App() {
     setFormData(prev => ({ ...prev, ...fields }));
   };
 
-  // Calculate flow dynamically
   const isAdSource = [LeadSource.GoogleAds, LeadSource.Instagram, LeadSource.Facebook].includes(formData.leadSource as LeadSource);
   
-  // Mapping slides to content
-  // 0: Welcome
-  // 1: Visit Type
-  // 2: Name
-  // 3: Mobile
-  // 4: Reason
-  // 5: Source
-  // 6: Attribution (Conditional)
-  // 7: Thank You
-
-  // Helper to determine next slide index
   const handleNext = () => {
     if (currentSlide === 5) {
       if (isAdSource) {
@@ -330,19 +309,16 @@ export default function App() {
 
   const totalSteps = isAdSource ? 8 : 7;
 
-  // Scroll top on slide change
   useEffect(() => {
     window.scrollTo(0,0);
   }, [currentSlide]);
 
   return (
     <div className="min-h-screen bg-[#F5EAE6] flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
-      
       {currentSlide > 0 && currentSlide < 7 && (
         <ProgressBar currentStep={currentSlide} totalSteps={totalSteps} />
       )}
 
-      {/* Header Logo Area */}
       <div className="w-full max-w-lg mb-6 flex justify-between items-center">
         <div className="text-xl font-bold text-[#9F6449] tracking-tight">Krest Dental</div>
         {currentSlide > 0 && currentSlide < 7 && (
@@ -352,10 +328,7 @@ export default function App() {
         )}
       </div>
 
-      {/* Main Card */}
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl overflow-hidden p-6 sm:p-10 min-h-[400px] flex flex-col justify-center relative">
-        
-        {/* Slide Content Rendering */}
         {currentSlide === 0 && <WelcomeSlide onNext={handleNext} />}
         {currentSlide === 1 && <VisitTypeSlide data={formData} updateData={updateData} onNext={handleNext} />}
         {currentSlide === 2 && <NameSlide data={formData} updateData={updateData} onNext={handleNext} />}
@@ -364,12 +337,31 @@ export default function App() {
         {currentSlide === 5 && <SourceSlide data={formData} updateData={updateData} onNext={handleNext} />}
         {currentSlide === 6 && <AttributionSlide data={formData} updateData={updateData} onNext={handleNext} />}
         {currentSlide === 7 && <ThankYouSlide data={formData} />}
-
       </div>
 
-      <div className="mt-8 text-center text-xs text-gray-400">
-        &copy; {new Date().getFullYear()} Krest Dental Clinic
+      <div className="mt-8 text-center text-xs text-gray-400 flex flex-col gap-2">
+        <span>&copy; {new Date().getFullYear()} Krest Dental Clinic</span>
+        <a href="/dashboard" className="text-[#9F6449]/40 hover:text-[#9F6449] transition-colors">Admin Login</a>
       </div>
     </div>
   );
+};
+
+// --- Root App with Simple Routing ---
+export default function App() {
+  const [view, setView] = useState<'survey' | 'dashboard'>('survey');
+
+  useEffect(() => {
+    if (window.location.pathname === '/dashboard') {
+      setView('dashboard');
+    } else {
+      setView('survey');
+    }
+  }, []);
+
+  if (view === 'dashboard') {
+    return <Dashboard />;
+  }
+
+  return <SurveyApp />;
 }

@@ -24,14 +24,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export default async function handler(req, res) {
-  // Handle CORS preflight if necessary
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
@@ -40,19 +35,29 @@ export default async function handler(req, res) {
     const db = client.db('krest_dental_db');
     const collection = db.collection('patients');
 
-    const data = req.body;
-    
-    // Add server-side metadata
-    const doc = {
-      ...data,
-      submittedAt: new Date(),
-      source: 'vercel-kiosk-app',
-      userAgent: req.headers['user-agent'] || 'unknown'
-    };
+    if (req.method === 'POST') {
+      const data = req.body;
+      
+      // Add server-side metadata
+      const doc = {
+        ...data,
+        submittedAt: new Date(),
+        source: 'vercel-kiosk-app',
+        userAgent: req.headers['user-agent'] || 'unknown'
+      };
 
-    const result = await collection.insertOne(doc);
+      const result = await collection.insertOne(doc);
+      res.status(200).json({ success: true, id: result.insertedId });
     
-    res.status(200).json({ success: true, id: result.insertedId });
+    } else if (req.method === 'GET') {
+      // Fetch all patients, sorted by newest first
+      const patients = await collection.find({}).sort({ submittedAt: -1 }).toArray();
+      res.status(200).json(patients);
+    
+    } else {
+      res.status(405).json({ error: 'Method not allowed' });
+    }
+
   } catch (e) {
     console.error("Database Error:", e);
     res.status(500).json({ error: 'Internal Server Error', details: e.message });

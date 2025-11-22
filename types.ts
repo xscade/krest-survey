@@ -42,6 +42,12 @@ export interface PatientFormData {
   adAttribution?: AdType;
 }
 
+export interface Patient extends PatientFormData {
+  _id: string;
+  submittedAt: string;
+  status?: string;
+}
+
 export interface SlideProps {
   data: PatientFormData;
   updateData: (fields: Partial<PatientFormData>) => void;

@@ -1,0 +1,121 @@
+import React, { useEffect, useState } from 'react';
+import { Login } from './Login';
+import { Analytics } from './Analytics';
+import { PatientTable } from './PatientTable';
+import { Patient } from '../../types';
+import { LayoutDashboard, Table2, LogOut, RefreshCw } from 'lucide-react';
+
+export const Dashboard = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const checkAuth = () => {
+    // Simple session persistence
+    const session = localStorage.getItem('krest_admin_session');
+    if (session) setIsAuthenticated(true);
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/patients');
+      if (res.ok) {
+        const data = await res.json();
+        setPatients(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch patients", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = () => {
+    localStorage.setItem('krest_admin_session', 'valid');
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('krest_admin_session');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F5EAE6]">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-[#9F6449]/10 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+           <div className="text-xl font-bold text-[#9F6449]">Krest Dashboard</div>
+           <div className="h-6 w-px bg-gray-200 mx-2"></div>
+           <div className="flex bg-[#F5EAE6] rounded-lg p-1">
+             <button 
+               onClick={() => setActiveTab('table')}
+               className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'table' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <Table2 size={16} /> Data Table
+             </button>
+             <button 
+               onClick={() => setActiveTab('analytics')}
+               className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'analytics' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <LayoutDashboard size={16} /> Analytics
+             </button>
+           </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchData} 
+            className="p-2 text-gray-400 hover:text-[#9F6449] rounded-full hover:bg-[#F5EAE6] transition-colors"
+            title="Refresh Data"
+          >
+            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-500 transition-colors"
+          >
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="p-6 max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            {activeTab === 'table' ? 'Patient Records' : 'Marketing Insights'}
+          </h2>
+          <p className="text-gray-500">
+            {activeTab === 'table' ? `Showing ${patients.length} total submissions` : 'Visualizing patient trends and attribution'}
+          </p>
+        </div>
+
+        {loading && patients.length === 0 ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin h-8 w-8 border-4 border-[#9F6449] border-t-transparent rounded-full"></div>
+          </div>
+        ) : (
+          <div className="animate-fade-in">
+            {activeTab === 'table' ? <PatientTable data={patients} /> : <Analytics data={patients} />}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
