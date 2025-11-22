@@ -3,26 +3,30 @@ export enum VisitType {
   Returning = 'Returning',
 }
 
-export enum ReasonForVisit {
-  Pain = 'Pain / Sensitivity',
-  Cleaning = 'Cleaning / Check-up',
-  Cavity = 'Tooth Cavity',
-  Braces = 'Braces / Aligners',
-  Cosmetic = 'Cosmetic Concern',
-  NotSure = 'Not Sure / Consultation',
-}
+// Default constants for initialization and fallback
+export const DEFAULT_REASONS = [
+  'Pain / Sensitivity',
+  'Cleaning / Check-up',
+  'Tooth Cavity',
+  'Braces / Aligners',
+  'Cosmetic Concern',
+  'Not Sure / Consultation'
+];
 
-export enum LeadSource {
-  GoogleSearch = 'Google Search',
-  GoogleAds = 'Google Ads',
-  Instagram = 'Instagram',
-  Facebook = 'Facebook',
-  Practo = 'Practo',
-  GoogleMaps = 'Google Maps',
-  FriendFamily = 'Friend / Family',
-  WalkIn = 'Walk-in',
-  Other = 'Other',
-}
+export const DEFAULT_SOURCES = [
+  'Google Search',
+  'Google Ads',
+  'Instagram',
+  'Facebook',
+  'Practo',
+  'Google Maps',
+  'Friend / Family',
+  'Walk-in',
+  'Other'
+];
+
+// Sources that trigger the Ad Attribution slide
+export const AD_SOURCES = ['Google Ads', 'Instagram', 'Facebook'];
 
 export enum AdType {
   Cleaning = 'Teeth Cleaning Ad',
@@ -32,12 +36,17 @@ export enum AdType {
   DontRemember = 'Don\'t Remember',
 }
 
+export interface FormOptions {
+  reasons: string[];
+  sources: string[];
+}
+
 export interface PatientFormData {
   visitType?: VisitType;
   fullName: string;
   mobileNumber: string;
-  reason?: ReasonForVisit;
-  leadSource?: LeadSource;
+  reason?: string;
+  leadSource?: string;
   otherSourceDetails?: string;
   adAttribution?: AdType;
 }
@@ -53,4 +62,5 @@ export interface SlideProps {
   updateData: (fields: Partial<PatientFormData>) => void;
   onNext: () => void;
   onPrev: () => void;
+  options?: string[]; // Added for dynamic options
 }

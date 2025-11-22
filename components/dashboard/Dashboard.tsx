@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Login } from './Login';
 import { Analytics } from './Analytics';
 import { PatientTable } from './PatientTable';
+import { Settings } from './Settings';
 import { Patient } from '../../types';
-import { LayoutDashboard, Table2, LogOut, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Table2, LogOut, RefreshCw, Settings as SettingsIcon } from 'lucide-react';
 
 export const Dashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'settings'>('table');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
 
   const checkAuth = () => {
-    // Simple session persistence
     const session = localStorage.getItem('krest_admin_session');
     if (session) setIsAuthenticated(true);
   };
@@ -37,10 +37,10 @@ export const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && activeTab !== 'settings') {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeTab]);
 
   const handleLogin = () => {
     localStorage.setItem('krest_admin_session', 'valid');
@@ -63,34 +63,42 @@ export const Dashboard = () => {
         <div className="flex items-center gap-4">
            <div className="text-xl font-bold text-[#9F6449]">Krest Dashboard</div>
            <div className="h-6 w-px bg-gray-200 mx-2"></div>
-           <div className="flex bg-[#F5EAE6] rounded-lg p-1">
+           <div className="flex bg-[#F5EAE6] rounded-lg p-1 overflow-x-auto">
              <button 
                onClick={() => setActiveTab('table')}
-               className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'table' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+               className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'table' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
              >
                <Table2 size={16} /> Data Table
              </button>
              <button 
                onClick={() => setActiveTab('analytics')}
-               className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'analytics' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+               className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'analytics' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
              >
                <LayoutDashboard size={16} /> Analytics
+             </button>
+             <button 
+               onClick={() => setActiveTab('settings')}
+               className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'settings' ? 'bg-white text-[#9F6449] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+             >
+               <SettingsIcon size={16} /> Settings
              </button>
            </div>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={fetchData} 
-            className="p-2 text-gray-400 hover:text-[#9F6449] rounded-full hover:bg-[#F5EAE6] transition-colors"
-            title="Refresh Data"
-          >
-            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-          </button>
+          {activeTab !== 'settings' && (
+            <button 
+              onClick={fetchData} 
+              className="p-2 text-gray-400 hover:text-[#9F6449] rounded-full hover:bg-[#F5EAE6] transition-colors"
+              title="Refresh Data"
+            >
+              <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+            </button>
+          )}
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-500 transition-colors"
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={16} /> <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </nav>
@@ -99,22 +107,22 @@ export const Dashboard = () => {
       <main className="p-6 max-w-7xl mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
-            {activeTab === 'table' ? 'Patient Records' : 'Marketing Insights'}
+            {activeTab === 'table' ? 'Patient Records' : activeTab === 'analytics' ? 'Marketing Insights' : 'Form Configuration'}
           </h2>
           <p className="text-gray-500">
-            {activeTab === 'table' ? `Showing ${patients.length} total submissions` : 'Visualizing patient trends and attribution'}
+            {activeTab === 'table' 
+              ? `Showing ${patients.length} total submissions` 
+              : activeTab === 'analytics' 
+                ? 'Visualizing patient trends and attribution'
+                : 'Manage options for the patient check-in form'}
           </p>
         </div>
 
-        {loading && patients.length === 0 ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin h-8 w-8 border-4 border-[#9F6449] border-t-transparent rounded-full"></div>
-          </div>
-        ) : (
-          <div className="animate-fade-in">
-            {activeTab === 'table' ? <PatientTable data={patients} /> : <Analytics data={patients} />}
-          </div>
-        )}
+        <div className="animate-fade-in">
+          {activeTab === 'table' && <PatientTable data={patients} />}
+          {activeTab === 'analytics' && <Analytics data={patients} />}
+          {activeTab === 'settings' && <Settings />}
+        </div>
       </main>
     </div>
   );

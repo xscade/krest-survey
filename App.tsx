@@ -6,10 +6,11 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { 
   PatientFormData, 
   VisitType, 
-  ReasonForVisit, 
-  LeadSource, 
   AdType,
-  SlideProps
+  SlideProps,
+  DEFAULT_REASONS,
+  DEFAULT_SOURCES,
+  AD_SOURCES
 } from './types';
 import { generateWelcomeMessage } from './services/geminiService';
 
@@ -21,6 +22,7 @@ const WelcomeSlide = ({ onNext }: { onNext: () => void }) => (
     <div className="w-24 h-24 bg-[#F5EAE6] border-2 border-[#9F6449]/20 rounded-full flex items-center justify-center mb-4 text-4xl">
       🦷
     </div>
+    {/* Header text hidden here via parent logic, but icon/title remain */}
     <h1 className="text-4xl font-bold text-slate-900">Welcome to<br/><span className="text-[#9F6449]">Krest Dental</span></h1>
     <p className="text-lg text-gray-500 max-w-xs mx-auto">We're happy to see you! Please fill out these quick details to check in.</p>
     <div className="w-full max-w-md pt-8">
@@ -104,12 +106,14 @@ const MobileSlide = ({ data, updateData, onNext }: SlideProps) => (
 );
 
 // Slide 5: Reason
-const ReasonSlide = ({ data, updateData, onNext }: SlideProps) => {
-  const reasons = Object.values(ReasonForVisit);
+const ReasonSlide = ({ data, updateData, onNext, options }: SlideProps) => {
+  // Use dynamic options or fallback to defaults
+  const reasons = options && options.length > 0 ? options : DEFAULT_REASONS;
+  
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-900">What brings you in today?</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
         {reasons.map((r) => (
           <OptionCard 
             key={r}
@@ -127,28 +131,32 @@ const ReasonSlide = ({ data, updateData, onNext }: SlideProps) => {
 };
 
 // Slide 6: Lead Source
-const SourceSlide = ({ data, updateData, onNext }: SlideProps) => {
-  const sources = Object.values(LeadSource);
+const SourceSlide = ({ data, updateData, onNext, options }: SlideProps) => {
+  const sources = options && options.length > 0 ? options : DEFAULT_SOURCES;
+  
+  // Ensure 'Other' is always last if it exists, or append it if missing
+  const displaySources = sources.filter(s => s !== 'Other');
+  displaySources.push('Other');
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-900">How did you hear about us?</h2>
-      {/* Added custom-scrollbar class and padding-right for better scroll visibility */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-        {sources.map((s) => (
+        {displaySources.map((s) => (
           <OptionCard 
             key={s}
             label={s}
             selected={data.leadSource === s}
             onClick={() => {
               updateData({ leadSource: s });
-              if (s === LeadSource.Other) return;
+              if (s === 'Other') return;
               setTimeout(onNext, 250);
             }}
           />
         ))}
       </div>
       
-      {data.leadSource === LeadSource.Other && (
+      {data.leadSource === 'Other' && (
         <div className="animate-fade-in">
           <input
             type="text"
@@ -278,12 +286,35 @@ const SurveyApp = () => {
     fullName: '',
     mobileNumber: '',
   });
+  const [options, setOptions] = useState<{reasons: string[], sources: string[]}>({
+    reasons: DEFAULT_REASONS,
+    sources: DEFAULT_SOURCES
+  });
+
+  useEffect(() => {
+    // Fetch dynamic options on mount
+    const fetchOptions = async () => {
+      try {
+        const res = await fetch('/api/options');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.reasons && data.sources) {
+            setOptions(data);
+          }
+        }
+      } catch (e) {
+        console.error("Using default options due to fetch error", e);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   const updateData = (fields: Partial<PatientFormData>) => {
     setFormData(prev => ({ ...prev, ...fields }));
   };
 
-  const isAdSource = [LeadSource.GoogleAds, LeadSource.Instagram, LeadSource.Facebook].includes(formData.leadSource as LeadSource);
+  // Determine if current source triggers ad attribution
+  const isAdSource = AD_SOURCES.includes(formData.leadSource || '');
   
   const handleNext = () => {
     if (currentSlide === 5) {
@@ -339,8 +370,9 @@ const SurveyApp = () => {
         {currentSlide === 1 && <VisitTypeSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
         {currentSlide === 2 && <NameSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
         {currentSlide === 3 && <MobileSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
-        {currentSlide === 4 && <ReasonSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
-        {currentSlide === 5 && <SourceSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
+        {/* Pass dynamic options to slides */}
+        {currentSlide === 4 && <ReasonSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} options={options.reasons} />}
+        {currentSlide === 5 && <SourceSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} options={options.sources} />}
         {currentSlide === 6 && <AttributionSlide data={formData} updateData={updateData} onNext={handleNext} onPrev={handlePrev} />}
         {currentSlide === 7 && <ThankYouSlide data={formData} />}
       </div>
