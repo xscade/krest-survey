@@ -201,59 +201,52 @@ const AttributionSlide = ({ data, updateData, onNext }: SlideProps) => {
 // Slide: Google Detail (Intermediate)
 const GoogleDetailSlide = ({ updateData, onNext }: { updateData: (fields: Partial<PatientFormData>) => void, onNext: () => void }) => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">How did you find us on Google?</h2>
-      <p className="text-gray-500 text-sm">Please select what you clicked on</p>
+    <div className="space-y-8 h-full flex flex-col justify-center">
+      <h2 className="text-2xl font-bold text-slate-900 text-center">How did you find us on Google?</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         {/* Google Ads Option */}
         <div 
-          className="group cursor-pointer"
+          className="group cursor-pointer relative flex flex-col items-center gap-4 transition-transform duration-300 hover:scale-[1.02]"
           onClick={() => {
             updateData({ leadSource: 'Google Ads' });
             setTimeout(onNext, 250);
           }}
         >
-          <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-[#9F6449] transition-all duration-300 h-full flex flex-col">
-            <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden relative">
-              <img 
-                src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/google%20ads.PNG" 
-                alt="Google Ads" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-            </div>
-            <div className="p-4 text-center border-t border-gray-100">
-              <h3 className="font-semibold text-lg text-slate-900 group-hover:text-[#9F6449]">Sponsored Ad</h3>
-              <p className="text-sm text-gray-500 mt-1">Labeled as "Sponsored" or "Ad"</p>
-            </div>
+          <div className="w-full aspect-[4/5] bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative border-2 border-transparent hover:border-[#9F6449]/30">
+            <img 
+              src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/google%20ads.PNG" 
+              alt="Google Ads" 
+              className="w-full h-full object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+          </div>
+          <div className="bg-white border border-gray-200 px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-gray-700 group-hover:border-[#9F6449] group-hover:text-[#9F6449] transition-colors">
+            Sponsored Ad
           </div>
         </div>
 
         {/* Practo Option */}
         <div 
-          className="group cursor-pointer"
+          className="group cursor-pointer relative flex flex-col items-center gap-4 transition-transform duration-300 hover:scale-[1.02]"
           onClick={() => {
             updateData({ leadSource: 'Practo' });
             setTimeout(onNext, 250);
           }}
         >
-          <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-[#9F6449] transition-all duration-300 h-full flex flex-col">
-            <div className="h-48 bg-gray-100 relative">
-              <video 
-                src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/practo.mov"
-                autoPlay 
-                loop 
-                muted 
-                playsInline 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-            </div>
-            <div className="p-4 text-center border-t border-gray-100">
-              <h3 className="font-semibold text-lg text-slate-900 group-hover:text-[#9F6449]">Practo Listing</h3>
-              <p className="text-sm text-gray-500 mt-1">Found us via Practo on Google</p>
-            </div>
+          <div className="w-full aspect-[4/5] bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative border-2 border-transparent hover:border-[#9F6449]/30">
+            <video 
+              src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/practo.mov"
+              autoPlay 
+              loop 
+              muted 
+              playsInline 
+              className="w-full h-full object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+          </div>
+          <div className="bg-white border border-gray-200 px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-gray-700 group-hover:border-[#9F6449] group-hover:text-[#9F6449] transition-colors">
+            Practo Listing
           </div>
         </div>
       </div>
@@ -405,12 +398,8 @@ const SurveyApp = () => {
       }
     } else if (currentSlide === 10) {
       // From Google Detail Slide (Index 10)
-      // Source has been updated to either 'Google Ads' or 'Practo'
-      if (currentIsAdSource) {
-        setCurrentSlide(6);
-      } else {
-        setCurrentSlide(7);
-      }
+      // Skip Attribution (Slide 6) regardless of selection, go straight to Thank You (Slide 7)
+      setCurrentSlide(7);
     } else {
       setCurrentSlide(prev => prev + 1);
     }
