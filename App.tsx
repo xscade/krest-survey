@@ -354,6 +354,12 @@ const SurveyApp = () => {
     sources: DEFAULT_SOURCES
   });
 
+  // Ref to track current form data to avoid stale closures in timeouts
+  const formDataRef = useRef(formData);
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
   useEffect(() => {
     // Fetch dynamic options on mount
     const fetchOptions = async () => {
@@ -377,17 +383,22 @@ const SurveyApp = () => {
   };
 
   // Determine if current source triggers ad attribution
+  // NOTE: We use formDataRef inside handleNext to get fresh state
   const isAdSource = AD_SOURCES.includes(formData.leadSource || '');
   
   const handleNext = () => {
+    const currentData = formDataRef.current;
+    const currentIsAdSource = AD_SOURCES.includes(currentData.leadSource || '');
+
     if (currentSlide === 5) {
       // Special handling for Google Search -> Show Detailed Source Slide (Index 10)
-      if (formData.leadSource === 'Google Search') {
+      // We check case-insensitive and trimmed to be safe with DB options
+      if (currentData.leadSource?.trim().toLowerCase() === 'google search') {
         setCurrentSlide(10);
         return;
       }
 
-      if (isAdSource) {
+      if (currentIsAdSource) {
         setCurrentSlide(6);
       } else {
         setCurrentSlide(7);
@@ -395,7 +406,7 @@ const SurveyApp = () => {
     } else if (currentSlide === 10) {
       // From Google Detail Slide (Index 10)
       // Source has been updated to either 'Google Ads' or 'Practo'
-      if (isAdSource) {
+      if (currentIsAdSource) {
         setCurrentSlide(6);
       } else {
         setCurrentSlide(7);
@@ -406,10 +417,13 @@ const SurveyApp = () => {
   };
 
   const handlePrev = () => {
+    const currentData = formDataRef.current;
+    const currentIsAdSource = AD_SOURCES.includes(currentData.leadSource || '');
+
     if (currentSlide === 0) return;
     
     if (currentSlide === 7) {
-      if (isAdSource) {
+      if (currentIsAdSource) {
         setCurrentSlide(6);
       } else {
         // If we are skipping attribution (e.g. Practo), go back to Source list (5) 
