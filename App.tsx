@@ -236,7 +236,7 @@ const GoogleDetailSlide = ({ updateData, onNext }: { updateData: (fields: Partia
         >
           <div className="w-full aspect-[9/16] bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative border-2 border-transparent hover:border-[#9F6449]/30">
             <video 
-              src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/practo.mov"
+              src="https://storage.googleapis.com/client-web-files/krest%20dental%20ai/New%20Video%202%20Screens.mov"
               autoPlay 
               loop 
               muted 
